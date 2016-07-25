@@ -60,8 +60,15 @@ echo "-Placing the firmware"
 	cp gen/*.out /lib/firmware/am335x-pru$PRU_CORE-fw
 
 echo "-Configuring pinmux"
-	config-pin -a $HEADER$PIN_NUMBER pruin
-	config-pin -q $HEADER$PIN_NUMBER
+	config-pin P8_39 pruin
+	config-pin P8_40 pruin
+	config-pin P8_41 pruin
+	config-pin P8_42 pruin
+	config-pin P8_43 pruin
+	config-pin P8_44 pruin
+	config-pin P8_45 pruin
+	config-pin P8_46 pruin
+	config-pin P8_28 pruout
 
 echo "-Rebooting"
 	if [ $PRU_CORE -eq 0 ]

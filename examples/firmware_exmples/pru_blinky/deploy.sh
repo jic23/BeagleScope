@@ -37,7 +37,7 @@
 
 #If changing these variables, make sure the given pin can be muxed to the given pru.  
 HEADER=P8_
-PIN_NUMBER=45
+PIN_NUMBER=46
 #PRU_CORE should be either 0 or 1
 PRU_CORE=1
 

@@ -54,7 +54,7 @@ void main(void)
 	/* TODO: Create stop condition, else it will toggle indefinitely */
 	while (1) {
 		__R30 ^= gpio;
-		__delay_cycles(100000000);
+		__delay_cycles(10);
 	}
 }
 

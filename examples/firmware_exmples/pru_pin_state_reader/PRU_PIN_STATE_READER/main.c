@@ -45,6 +45,7 @@
 
 
 volatile register uint32_t __R31;
+volatile register uint32_t __R30;
 
 /* Host-1 Interrupt sets bit 31 in register R31 */
 #define HOST_INT				((uint32_t) 1 << 31)	
@@ -77,6 +78,7 @@ volatile register uint32_t __R31;
  * muxed to P8_45.
  */
 #define CHECK_BIT	0x0001
+#define DELAY 5
 
 
 
@@ -85,11 +87,33 @@ uint8_t payload[RPMSG_BUF_SIZE];
 /*
  * main.c
  */
+
+uint32_t dum(void){
+	uint32_t gpio=0;
+	uint32_t val=0;
+	int i;
+	__R30 = 0;
+	__delay_cycles(DELAY);
+	for(i=0;i<10;i++){
+		__R30 = 0x00000000;
+		__delay_cycles(DELAY);
+		val += __R31;
+		__delay_cycles(DELAY);
+		__R30 = 0xffffffff;
+		__delay_cycles(DELAY);
+	}
+	return val/10;
+}
+
+		
+	
+	
+
 void main(void)
 {
 	struct pru_rpmsg_transport transport;
 	uint16_t src, dst, len;
-	uint32_t prev_gpio_state;
+	uint32_t prev_gpio_state, value;
 	volatile uint8_t *status;
 	
 	/* allow OCP master port access by the PRU so the PRU can read external memories */
@@ -117,11 +141,8 @@ void main(void)
 			CT_INTC.SICR_bit.STS_CLR_IDX = FROM_ARM_HOST;
 			/* Receive all available messages, multiple messages can be sent per kick */
 			while (pru_rpmsg_receive(&transport, &src, &dst, payload, &len) == PRU_RPMSG_SUCCESS) {	
-				while(1)
-					if ((__R31 ^ prev_gpio_state) & CHECK_BIT) {
-						prev_gpio_state = __R31 & CHECK_BIT;	
-						pru_rpmsg_send(&transport, dst, src, "CHANGED\n", sizeof("CHANGED\n"));
-					}		
+				value = dum();
+				pru_rpmsg_send(&transport, dst, src, &value, sizeof(uint32_t));
 			}
 		}
 	}
