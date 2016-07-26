@@ -178,6 +178,7 @@ static int beaglescope_driver_probe (struct rpmsg_channel *rpdev)
 	struct rpmsg_device_id *id;
 	struct iio_buffer *buffer;
 
+//remember to clean these out before a formal submission - lots of people don't!
 
 	log_debug("probe");
 
@@ -216,12 +217,17 @@ static int beaglescope_driver_probe (struct rpmsg_channel *rpdev)
 	}
 
 	init_waitqueue_head(&st->wait_list);
+	//iio_device_register is responsible for exposing interfaces to userspace / inkernel consumers.  So you really want
+	//your device to be ready to run when it happens.  Basically it should always be the last call in probe.
+	
 
 	return 0;
 
 error_remove_buffer:
+//we should probably have a devm version of iio_kfifo functions, but a job for another day.
 	iio_kfifo_free(indio_dev->buffer);
 error_free_device:
+//managed allocation will get unwound anyway so no need for this handling.
 	devm_iio_device_free(&rpdev->dev, indio_dev);
 error_ret:
 	return ret;
@@ -239,8 +245,14 @@ static void beaglescope_driver_remove(struct rpmsg_channel *rpdev)
 	indio_dev = dev_get_drvdata(&rpdev->dev);
 	st = iio_priv(indio_dev);
 
+	//Don't use devm version of iio_device_register /unregister as you have other work that needs to be done
+	//after removing the externally exposed interfaces.  Think about the resulting ordering of doing it like this.
+	//Don't worry - lots of people don't follow the devm stuff initially. 
 	devm_iio_device_unregister(&rpdev->dev, indio_dev);
 	iio_kfifo_free(indio_dev->buffer);
+	//Devm interfaces are managed code.  Lifetime of the elements they control is linked to that of the struct device.
+	//Thus you don't need to explicitly free them as they'll get unwound in the reverse order of their creation.
+	//So this shouldn't be here.
 	devm_iio_device_free(&rpdev->dev, indio_dev);
 }
 
